@@ -37,6 +37,7 @@ class Player(object):
         self.right = False
         self.walkCount = 0
         self.standing = True
+        self.hitbox = (self.x + 17, self.y + 11, 29, 52)
 
     def draw(self, win):
         if self.walkCount + 1 >= 27:
@@ -54,6 +55,56 @@ class Player(object):
                 win.blit(walkRight[0], (self.x, self.y))
             else:
                 win.blit(walkLeft[0], ((self.x, self.y)))
+        self.hitbox = (self.x + 17, self.y + 11, 29, 52)
+        pygame.draw.rect(win, (255,0,0), self.hitbox, 2)
+
+class Enemy(object):
+    walkRight = [] 
+    walkLeft = []
+    for file in os.listdir():
+        if file[:1] == "R" and file.split(".")[0][-1] == "E":
+            walkRight.append(pygame.image.load(file))
+        elif file[:1] == "L" and file.split(".")[0][-1] == "E":
+            walkLeft.append(pygame.image.load(file))
+    
+    def __init__(self, x, y, width, height, end):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.end = end
+        self.path = [self.x, self.end]
+        self.walkCount = 0
+        self.vel = 3
+        self.hitbox = (self.x + 17, self.y + 2, 31, 57)
+    
+    def draw(self, win):
+        self.move()
+        if self.walkCount + 1 >= 33:
+            self.walkCount = 0
+        if self.vel > 0:
+            win.blit(self.walkRight[self.walkCount // 3], (self.x, self.y))
+            self.walkCount += 1
+        else:
+            win.blit(self.walkLeft[self.walkCount // 3], (self.x, self.y))
+            self.walkCount += 1
+        self.hitbox = (self.x + 17, self.y + 2, 31, 57)
+        pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
+
+    def move(self):
+        if self.vel > 0:
+            if self.x < self.path[1] + self.vel:
+                self.x += self.vel
+
+            else:
+                self.vel = self.vel * -1
+                self.walkCount = 0
+        else:
+            if self.x - self.vel > self.path[0]:
+                self.x += self.vel
+            else:
+                self.vel = self.vel * -1
+                self.walkCount = 0
 
 class Projectile(object):
     def __init__(self, x, y, radius, colour, facing):
@@ -70,12 +121,14 @@ class Projectile(object):
 def redrawGameWindow():
     win.blit(bg, (0,0))
     man.draw(win)
+    goblin.draw(win)
     for bullet in bullets:
         bullet.draw(win)
     pygame.display.update()
 
 
 man = Player(300, 400, 64, 64)
+goblin = Enemy(100, 410, 64, 64, 450)
 bullets = []
 run = True
 while run:
